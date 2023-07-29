@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/ferchox920/go-react-crud.git/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -14,20 +19,63 @@ func main() {
 		fmt.Println("No .env file found")
 	}
 	port := os.Getenv("PORT")
-    fmt.Println("port")
-    fmt.Println(port)
+	mongodb := os.Getenv("MONGODB_URI")
+
+	// Verifica si la cadena de conexión está vacía
 
 	if port == "" {
 		port = "3000"
 	}
+	if mongodb == "" {
+		mongodb = "mongodb://localhost:27017/gomongodb"
+	}
+    app := fiber.New()
 
-	app := fiber.New()
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongodb))
+	if err != nil {
+		panic(err)
+	}
+
 	app.Use(cors.New())
 	app.Static("/", "./client/dist")
 
-	app.Get("/users", func(c *fiber.Ctx) error {
+    app.Get("/users", func(c *fiber.Ctx) error {
+		var users []models.User
+
+		coll := client.Database("gomongodb").Collection("users")
+		results, error := coll.Find(context.TODO(), bson.M{})
+
+		if error != nil {
+			panic(error)
+		}
+
+		for results.Next(context.TODO()) {
+			var user models.User
+			results.Decode(&user)
+			users = append(users, user)
+		}
+
 		return c.JSON(&fiber.Map{
-			"data": "usuarios desde el backend",
+			"users": users,
+		})
+
+	})
+
+	app.Post("/users", func(c *fiber.Ctx) error {
+		var user models.User
+		c.BodyParser(&user)
+		coll := client.Database("gomongodb").Collection("users")
+		result, err := coll.InsertOne(context.TODO(), bson.D{{
+			Key:   "name",
+			Value: user.Name,
+		}})
+
+		if err != nil {
+			panic(err)
+		}
+
+		return c.JSON(&fiber.Map{
+			"data": result,
 		})
 	})
 

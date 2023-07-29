@@ -1,25 +1,52 @@
-import React, { useState } from "react";
-
-import "./App.css";
+import { useEffect } from "react";
+import { useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [name, setName] = useState("");
+  const [users, setUsers] = useState([])
 
-  const callBackEnd = async () => {
-    try {
-      const response = await fetch("/users");
-      const data = await response.json();
-      console.log("data", data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
+  async function loadUsers() {
+    const response = await fetch( "/users");
+    const data = await response.json();
+    console.log(data)
+    setUsers(data.users)
+  }
+
+  useEffect(() => {
+    loadUsers()
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const response = await fetch("/users", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
+    loadUsers()
   };
 
   return (
-    <>
-      <h1>hello world</h1>
-      <button onClick={callBackEnd}>Obtener datos</button>
-    </>
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="name"
+          placeholder="Coloca tu nombre"
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <button>Guardar</button>
+      </form>
+
+      <ul>
+        {users.map(user => (
+          <li key={user._id}>{user.name}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
