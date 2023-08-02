@@ -3,17 +3,17 @@ import { useState } from "react";
 
 function App() {
   const [name, setName] = useState("");
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState([]);
 
   async function loadUsers() {
-    const response = await fetch( "/users");
+    const response = await fetch("/users");
     const data = await response.json();
-    console.log(data)
-    setUsers(data.users)
+    console.log(data);
+    setUsers(data.users);
   }
 
   useEffect(() => {
-    loadUsers()
+    loadUsers();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -26,7 +26,34 @@ function App() {
       },
     });
     const data = await response.json();
-    loadUsers()
+    loadUsers();
+    setName(""); // Clear the input after submitting
+  };
+
+  const handleUpdate = async (userId) => {
+    const newName = prompt("Enter the new name:");
+    if (newName) {
+      const response = await fetch(`/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ name: newName }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      loadUsers();
+    }
+  };
+
+  const handleDelete = async (userId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    if (confirmDelete) {
+      const response = await fetch(`/users/${userId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      loadUsers();
+    }
   };
 
   return (
@@ -35,6 +62,7 @@ function App() {
         <input
           type="name"
           placeholder="Coloca tu nombre"
+          value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
@@ -42,8 +70,12 @@ function App() {
       </form>
 
       <ul>
-        {users.map(user => (
-          <li key={user._id}>{user.name}</li>
+        {users.map((user) => (
+          <li key={user._id}>
+            {user.name}{" "}
+            <button onClick={() => handleUpdate(user._id)}>Actualizar</button>{" "}
+            <button onClick={() => handleDelete(user._id)}>Eliminar</button>
+          </li>
         ))}
       </ul>
     </div>
