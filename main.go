@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-
 	"github.com/ferchox920/go-react-crud.git/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

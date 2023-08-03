@@ -1,8 +1,9 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import UserForm from "./component/UserForm";
+import UserList from "./component/UserList";
+
 
 function App() {
-  const [name, setName] = useState("");
   const [users, setUsers] = useState([]);
 
   async function loadUsers() {
@@ -16,26 +17,12 @@ function App() {
     loadUsers();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const response = await fetch("/users", {
-      method: "POST",
-      body: JSON.stringify({ name }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    loadUsers();
-    setName(""); // Clear the input after submitting
-  };
+  const handleUpdate = async (userId,updatedName) => {
 
-  const handleUpdate = async (userId) => {
-    const newName = prompt("Enter the new name:");
-    if (newName) {
+    if (updatedName) {
       const response = await fetch(`/users/${userId}`, {
         method: "PUT",
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({ name: updatedName }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -46,7 +33,9 @@ function App() {
   };
 
   const handleDelete = async (userId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this user?"
+    );
     if (confirmDelete) {
       const response = await fetch(`/users/${userId}`, {
         method: "DELETE",
@@ -58,26 +47,12 @@ function App() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="name"
-          placeholder="Coloca tu nombre"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <button>Guardar</button>
-      </form>
-
-      <ul>
-        {users.map((user) => (
-          <li key={user._id}>
-            {user.name}{" "}
-            <button onClick={() => handleUpdate(user._id)}>Actualizar</button>{" "}
-            <button onClick={() => handleDelete(user._id)}>Eliminar</button>
-          </li>
-        ))}
-      </ul>
+      <UserForm loadUsers={loadUsers} />
+      <UserList
+        users={users}
+        handleUpdate={handleUpdate}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 }
